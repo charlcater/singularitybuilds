@@ -1,0 +1,72 @@
+## TODO
+## fix pfits install
+## copy GALFACTS scripts (copy over from github?)
+
+BootStrap: library
+From: ubuntu:18.04
+
+%help
+    A baseline Ubuntu 18.04 (LTS Bionic Beaver) container with necessary GALFACTS dependencies
+
+%environment
+    LC_ALL=C
+    LD_LIBRARY_PATH=/usr/local/lib64:/usr/local/lib:/usr/lib64:/usr/lib:/lib64:/lib
+    TZ='South_Africa/Cape_Town'
+
+    export LC_ALL LD_LIBRARY_PATH TZ
+
+%post
+    apt-get update
+    apt-get install -y build-essential libX* python3 python-setuptools wget
+
+    ## Download and move installers
+    wget https://raw.githubusercontent.com/charlcater/singularitybuilds/master/cfitsio-3.47.tar.gz
+    wget https://raw.githubusercontent.com/charlcater/singularitybuilds/master/ds9.ubuntu18.8.0.1.tar.gz
+    wget https://raw.githubusercontent.com/charlcater/singularitybuilds/master/requirements.txt
+    wget https://bootstrap.pypa.io/get-pip.py
+    
+    mkdir -p installs
+    mv cfitsio-3.47.tar.gz ds9.ubuntu18.8.0.1.tar.gz requirements.txt get-pip.py installs
+    cd installs
+
+    ## Install CFITSIO
+    tar xf cfitsio-3.47.tar.gz
+    cd cfitsio-3.47/
+    ./configure --prefix=/usr
+    make
+    make install
+    make clean
+    cd ..
+
+    ## Install DS9
+    tar xf ds9.ubuntu18.8.0.1.tar.gz
+    mv ds9 /usr/local/bin
+    chmod +x /usr/local/bin/ds9
+
+    ## Install Python dependencies
+    python3 get-pip.py
+    pip3 install -r requirements.txt
+    ## TODO not working currently
+    ## pip3 install pfits==0.0.2  ## this requires numpy from previous install
+
+    ## Clean Apt cache & housekeeping
+    apt-get clean
+    cd ..
+    rm -rf /installs
+    rm -rf /var/cache/apt
+
+%test
+    echo "Image Build Date: $(date)"
+    echo "Ubuntu $(cat /etc/os-release | grep VERSION= | sed 's|VERSION=||' | sed 's|"||g')"
+
+%runscript
+    echo "Ubuntu $(cat /etc/os-release | grep VERSION= | sed 's|VERSION=||' | sed 's|"||g')"
+    echo "GALFACTS Singularity Container Test v0.0.1"
+    echo "Container was created $(date)"
+
+%labels
+    Author charl.cater@gmail.com
+    Version v0.0.1
+
+%help
+    This is an intial demo container to test setting up a Singularity container to run the IDIA GALFACTS code
